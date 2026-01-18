@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 interface Todo {
   id: number;
   text: string;
@@ -17,7 +19,49 @@ export type TaskAction =
 | { type: 'TOGGLE_TODO', payload: number} //payload: valor o argumento o valor a una accion
 | { type: 'DELETE_TODO', payload: number }; // acciones relaciones al area de tasks, no input u otra cosa
 
+const TodoSchema = z.object({
+    id: z.number(),
+    text: z.string(),
+    completed: z.boolean(),
+})
 
+const TaskStateSchema = z.object({
+    todos: z.array(TodoSchema),
+    length: z.number(),
+    completed: z.number(),
+    pending: z.number(),
+})
+
+
+export const getTasksInitialState = ():TaskState =>{
+    const localStorageState = localStorage.getItem('tasks-state');
+
+    if (!localStorageState) {
+    return {
+      todos: [],
+      completed: 0,
+      pending: 0,
+      length: 0,
+    };
+  }
+
+  // Validar mediante Zod
+  const result = TaskStateSchema.safeParse(JSON.parse(localStorageState));
+
+  if( result.error ) {
+    console.log(result.error);
+    return {
+      todos: [],
+      completed: 0,
+      pending: 0,
+      length: 0,
+    };
+  }
+
+  // !!Cuidado que el  objeto pudo ser manipulado
+  //return JSON.parse(localStorageState);
+  return result.data;
+}
 
 
 export const taskReducer = (state:TaskState, action:TaskAction ):TaskState=>{ //regresara algo del mismo tipo que el state
@@ -28,7 +72,7 @@ export const taskReducer = (state:TaskState, action:TaskAction ):TaskState=>{ //
         case 'ADD_TODO':{
             const newTodo: Todo ={
                 id: Date.now(),
-                text: inputValue.trim(),
+                text: action.payload,
                 completed: false,
             }
 
@@ -70,15 +114,18 @@ export const taskReducer = (state:TaskState, action:TaskAction ):TaskState=>{ //
               if(todo.id === action.payload){
                 return {...todo, completed: !todo.completed};
               }
+              return todo;
+            });
+
               return {
                 ...state,
                 todos: updatedTodos,
                 completed: updatedTodos.filter((todo:Todo) => todo.completed).length,
                 pending: updatedTodos.filter((todo:Todo) => !todo.completed).length
               }
-            })
-        }
-        return state;
+            }
+        
+
 
         default:
         return state
