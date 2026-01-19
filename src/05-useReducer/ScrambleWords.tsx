@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { SkipForward, Play } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const GAME_WORDS = [
   'REACT',
@@ -44,7 +45,7 @@ const scrambleWord = (word: string = '') => {
 export const ScrambleWords = () => {
   const [words, setWords] = useState(shuffleArray(GAME_WORDS));
 
-  const [currentWord, setCurrentWord] = useState(words[0]);
+  const [currentWord, setCurrentWord] = useState(words[0]); // valor dentro de useState(...) es el punto de partida de tu estado
   const [scrambledWord, setScrambledWord] = useState(scrambleWord(currentWord));
   const [guess, setGuess] = useState('');
   const [points, setPoints] = useState(0);
@@ -60,19 +61,60 @@ export const ScrambleWords = () => {
     // Previene el refresh de la página
     e.preventDefault();
     // Implementar lógica de juego
-    console.log('Intento de adivinanza:', guess, currentWord);
+    //console.log('Intento de adivinanza:', guess, currentWord);
+
+    if(guess === currentWord){
+        const newWords = words.slice(1);
+        //Conffetti
+
+        confetti({
+            particleCount: 100,
+            spread: 120,
+            origin: {y:0.6},
+        })
+
+        setPoints(points+1);
+        setGuess('');
+        setWords(newWords);
+        setCurrentWord(newWords[0]);
+        setScrambledWord(scrambleWord(newWords[0]));
+
+        return;
+    }
+
+    setErrorCounter(errorCounter + 1);
+    setGuess('');
+
+    if(errorCounter + 1 >= maxAllowErrors){
+        setIsGameOver(true);
+    }
 
   };
 
   const handleSkip = () => {
-    console.log('Palabra saltada');
+    //console.log('Palabra saltada');
 
+    if(skipCounter >= maxSkips) return ; // no se puede skipear mas de lo permitido
     
+    const updatedWords = words.splice(1); //se elimina el primera palabra en el array que era la palabra "currentWord"
+    setWords(updatedWords); //el nuevo arreglo de palabra sin la palabra que eliminamos
+    setCurrentWord(updatedWords[0]); // la nueva palabra que esta para adivinar
+    setScrambledWord(scrambleWord(updatedWords[0]));//mandamos a desordenar las letras
+    setGuess('');
   };
 
   const handlePlayAgain = () => {
-    console.log('Jugar de nuevo');
-    
+    //console.log('Jugar de nuevo');
+    const newArray =  shuffleArray(GAME_WORDS);
+
+    setPoints(0);
+    setErrorCounter(0);
+    setGuess('');
+    setWords(newArray);
+    setCurrentWord(words[0]);
+    setIsGameOver(false);
+    setSkipCounter(0);
+    setScrambledWord(scrambleWord(newArray[0]));
   };
 
   //! Si ya no hay palabras para jugar, se muestra el mensaje de fin de juego
