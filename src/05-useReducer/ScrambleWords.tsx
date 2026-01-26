@@ -2,12 +2,12 @@
 // Es necesario componentes de Shadcn/ui
 // https://ui.shadcn.com/docs/installation/vite
 
-import React, { useReducer, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { SkipForward, Play } from 'lucide-react';
-//import confetti from 'canvas-confetti';
+import confetti from 'canvas-confetti';
 import { scrambleWordsReducer, getInitialState } from './reducer/scrambleWordReducer';
 
 
@@ -28,6 +28,16 @@ export const ScrambleWords = () => {
     isGameOver,
     totalWords,
   } = state;
+
+  useEffect(() => {
+    if (points === 0) return;
+
+    confetti({
+      particleCount: 100,
+      spread: 120,
+      origin: { y: 0.6 },
+    });
+  }, [points]);
 
   /** const [state, dispatch] = useReducer(reducer, initialState);
    * state: El estado actual (como en useState)
@@ -53,6 +63,10 @@ export const ScrambleWords = () => {
   const handleGuessSubmit = (e: React.FormEvent) => {
     // Previene el refresh de la página
     e.preventDefault();
+
+     dispatch({
+        type: 'CHECK_ANSWER',
+     });
     // Implementar lógica de juego
     //console.log('Intento de adivinanza:', guess, currentWord);
 
@@ -85,6 +99,7 @@ export const ScrambleWords = () => {
   };
 
   const handleSkip = () => {
+     dispatch({ type: 'SKIP_WORD' });
     //console.log('Palabra saltada');
 
     // if(skipCounter >= maxSkips) return ; // no se puede skipear mas de lo permitido
@@ -97,6 +112,7 @@ export const ScrambleWords = () => {
   };
 
   const handlePlayAgain = () => {
+     dispatch({ type: 'START_NEW_GAME', payload: getInitialState() });
     //console.log('Jugar de nuevo');
     // const newArray =  shuffleArray(GAME_WORDS);
 
@@ -190,7 +206,11 @@ export const ScrambleWords = () => {
                     value={guess}
                     onChange={(e) =>
                       //setGuess(e.target.value.toUpperCase().trim())
-                      console.log(e.target.value)
+                      //console.log(e.target.value)
+                      dispatch({
+                        type: 'SET_GUESS', 
+                        payload: e.target.value,
+                      })
                     }
                     placeholder="Ingresa tu palabra..."
                     className="text-center text-lg font-semibold h-12 border-2 border-indigo-200 focus:border-indigo-500 transition-colors"
